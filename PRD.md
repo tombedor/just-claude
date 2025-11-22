@@ -46,8 +46,20 @@ Upon startup, detect the presence of a justfile in the repo and dynamically crea
 - Root recipes: `just-<recipe-name>` (e.g., `just-build`)
 - Module recipes: `just-<namepath>` (e.g., `just-subdir::deploy`)
 
+#### Directory Structure
+- Root recipes: `.claude/skills/just-<recipe-name>/SKILL.md`
+- Module recipes: `.claude/skills/just-<module-name>/<recipe-name>/SKILL.md`
+  - Example: `.claude/skills/just-subdir/deploy/SKILL.md`
+  - Mirrors just's `::` namepath with nested directories
+
+#### Recipe Name Safety
+- Just enforces alphanumeric, dash, and underscore characters only
+- No sanitization needed (just rejects unsafe characters)
+- Directory names are guaranteed filesystem-safe
+
 #### Documentation
-- Use recipe doc comments from justfile as skill descriptions
+- Use recipe doc comments from justfile as skill descriptions (auto-generated)
+- Skill quality reflects justfile documentation quality (no enhancement)
 - Document parameters in skill description (required vs optional)
 - Include usage examples in skill prompt
 
@@ -62,6 +74,24 @@ Upon startup, detect the presence of a justfile in the repo and dynamically crea
 - Remove skills if justfile is deleted (detected on next session start)
 - Don't affect any other Claude Code skills
 
+## Package Structure
+
+```
+just-claude/
+├── package.json
+├── bin/
+│   └── cli.js              # npx just-claude commands
+├── scripts/
+│   ├── postinstall.js      # Runs after npm install
+│   └── preuninstall.js     # Runs before npm uninstall
+├── templates/
+│   └── detect-justfile.sh  # Hook script template
+└── lib/
+    └── generator.js        # Shared skill generation logic
+```
+
+**Package name**: `just-claude` (available on npm)
+
 ## Installation & Configuration
 
 ### Installation
@@ -73,10 +103,11 @@ npm install just-claude
 **What it does:**
 1. Installs package to `node_modules/just-claude`
 2. Postinstall script automatically:
-   - Creates `.claude/hooks/detect-justfile.sh` hook script
+   - Copies `templates/detect-justfile.sh` to `.claude/hooks/detect-justfile.sh`
    - Creates/updates `.claude/settings.json` to register the SessionStart hook
    - Backs up existing `.claude/settings.json` if present (to `.claude/settings.json.backup`)
    - Merges hook configuration into existing settings (doesn't overwrite)
+   - Uses `$INIT_CWD` (npm environment variable) for project root path
 
 **Package scope:** Per-project installation (not global)
 
@@ -90,8 +121,8 @@ npm uninstall just-claude
 1. Preuninstall script automatically:
    - Removes hook configuration from `.claude/settings.json`
    - Removes `.claude/hooks/detect-justfile.sh`
-   - Optionally cleans up generated skill directories (`.claude/skills/just-*`)
-   - Restores `.claude/settings.json.backup` if no other hooks remain
+   - Cleans up generated skill directories (`.claude/skills/just-*`)
+   - Restores `.claude/settings.json.backup` if hooks array becomes empty after removal
 
 ### Configuration Merging Strategy
 
@@ -111,13 +142,15 @@ npm uninstall just-claude
       "hooks": [
         {
           "type": "command",
-          "command": ".claude/hooks/detect-justfile.sh"
+          "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/detect-justfile.sh"
         }
       ]
     }
   ]
 }
 ```
+
+**Hook path**: Uses absolute path with `$CLAUDE_PROJECT_DIR` environment variable for reliability
 
 ## Requirements
 
@@ -304,11 +337,58 @@ Show:
 - **Integration tests**: Temporary directories with real justfiles
 - **Shell tests**: bats (Bash Automated Testing System) for hook script
 
+## Hook Execution Context
+
+### Environment Variables
+- **`CLAUDE_PROJECT_DIR`**: Absolute path to project root (use for all paths)
+- **`CLAUDE_CODE_REMOTE`**: Set to "true" in web environments
+- **`INIT_CWD`**: NPM variable for install location (postinstall only)
+
+### Hook Input/Output Protocol
+
+**SessionStart stdin** (JSON):
+```json
+{
+  "session_id": "abc123",
+  "source": "startup|resume|clear|compact",
+  "hook_event_name": "SessionStart"
+}
+```
+
+**Hook output**:
+- **stdout + exit 0**: Message added as context to Claude
+- **stderr + exit 1**: Non-blocking warning (shown in verbose mode)
+- **stderr + exit 2**: Blocking error (halts session, shown to user)
+
+**Example hook logging**:
+```bash
+#!/bin/bash
+# Success with context
+echo "Generated 5 just-claude skills from justfile"
+exit 0
+
+# Warning (just not installed)
+echo "Warning: just command not found, skipping skill generation" >&2
+exit 0  # Non-blocking
+
+# Error (malformed justfile)
+echo "Error: Justfile syntax error - just --dump failed" >&2
+exit 0  # Non-blocking (don't halt Claude Code)
+```
+
+### Working Directory
+- Hooks execute from current directory (typically project root)
+- Always use `$CLAUDE_PROJECT_DIR` for absolute path references
+- Never rely on relative paths
+
 ## Implementation Notes
 
 - Use `just --dump --dump-format json` to parse recipes and modules
-- Create skill directories in `.claude/skills/just-<recipe-name>/`
+- Create skill directories in `.claude/skills/just-<recipe-name>/SKILL.md`
+- Module recipes use nested directories: `.claude/skills/just-<module>/<recipe>/SKILL.md`
 - Each skill has a `SKILL.md` file with YAML frontmatter
 - Hook script handles skill creation/deletion
 - NPM postinstall/preuninstall scripts handle setup/teardown
 - Feature detection over OS detection for maximum portability
+- Hook uses absolute paths via `$CLAUDE_PROJECT_DIR`
+- All recipe names are filesystem-safe (just enforces this)
