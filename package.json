@@ -1,0 +1,46 @@
+{
+  "name": "just-claude",
+  "version": "0.1.0",
+  "description": "Automatically expose justfile recipes as Claude Code skills",
+  "main": "lib/generator.js",
+  "bin": {
+    "just-claude": "./bin/cli.js"
+  },
+  "scripts": {
+    "postinstall": "node scripts/postinstall.js",
+    "preuninstall": "node scripts/preuninstall.js",
+    "test": "node --test test/*.test.js",
+    "test:watch": "node --test --watch test/*.test.js"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "just",
+    "justfile",
+    "skills",
+    "automation",
+    "hooks",
+    "task-runner"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "scripts/",
+    "templates/",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/just-claude.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/just-claude/issues"
+  },
+  "homepage": "https://github.com/yourusername/just-claude#readme"
+}

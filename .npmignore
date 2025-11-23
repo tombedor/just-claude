@@ -1,0 +1,8 @@
+test/
+.gitignore
+.git/
+.claude/
+PRD.md
+ROADMAP.md
+test-output/
+*.test.js

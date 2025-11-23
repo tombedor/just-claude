@@ -1,0 +1,5 @@
+# Add these lines to your project's .gitignore
+
+# Just-claude generated files
+.claude/skills/just-*/
+.claude/settings.json.backup
