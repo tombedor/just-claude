@@ -1,0 +1,16 @@
+{
+  "hooks": [
+    {
+      "type": "SessionStart",
+      "matchers": [
+        "*"
+      ],
+      "hooks": [
+        {
+          "type": "command",
+          "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/detect-justfile.sh"
+        }
+      ]
+    }
+  ]
+}

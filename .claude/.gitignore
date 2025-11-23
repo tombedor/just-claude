@@ -1,0 +1,5 @@
+# Ignore generated skills
+skills/just-*/
+
+# Ignore backup files
+settings.json.backup

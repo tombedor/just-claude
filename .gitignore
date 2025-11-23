@@ -1,7 +1,8 @@
 node_modules/
 *.log
 .DS_Store
-.claude/
+.claude/skills/just-*/
+.claude/settings.json.backup
 test-output/
 coverage/
 *.tgz
