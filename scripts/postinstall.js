@@ -44,7 +44,7 @@ function configureSettings(projectRoot) {
   // Ensure .claude directory exists
   fs.mkdirSync(claudeDir, { recursive: true });
 
-  let settings = { hooks: [] };
+  let settings = { hooks: {} };
 
   // Load existing settings if present
   if (fs.existsSync(settingsFile)) {
@@ -57,20 +57,25 @@ function configureSettings(projectRoot) {
       console.log('just-claude: Backed up existing settings.json');
     } catch (error) {
       console.error('just-claude: Warning - Could not parse existing settings.json:', error.message);
-      settings = { hooks: [] };
+      settings = { hooks: {} };
     }
   }
 
-  // Ensure hooks array exists
-  if (!Array.isArray(settings.hooks)) {
-    settings.hooks = [];
+  // Normalize hooks shape to new object format
+  if (Array.isArray(settings.hooks)) {
+    settings.hooks = {};
+  } else if (typeof settings.hooks !== 'object' || settings.hooks === null) {
+    settings.hooks = {};
+  }
+
+  if (!Array.isArray(settings.hooks.SessionStart)) {
+    settings.hooks.SessionStart = [];
   }
 
   // Check if our hook is already configured
-  const hookExists = settings.hooks.some(hook =>
-    hook.type === 'SessionStart' &&
-    hook.hooks &&
-    hook.hooks.some(h => h.command && h.command.includes('detect-justfile.sh'))
+  const hookExists = settings.hooks.SessionStart.some(entry =>
+    entry.hooks &&
+    entry.hooks.some(h => h.command && h.command.includes('detect-justfile.sh'))
   );
 
   if (hookExists) {
@@ -80,8 +85,7 @@ function configureSettings(projectRoot) {
 
   // Add SessionStart hook
   const sessionStartHook = {
-    type: 'SessionStart',
-    matchers: ['*'],
+    matcher: '*',
     hooks: [
       {
         type: 'command',
@@ -90,7 +94,7 @@ function configureSettings(projectRoot) {
     ]
   };
 
-  settings.hooks.push(sessionStartHook);
+  settings.hooks.SessionStart.push(sessionStartHook);
 
   // Write updated settings
   fs.writeFileSync(settingsFile, JSON.stringify(settings, null, 2) + '\n', 'utf-8');

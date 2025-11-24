@@ -318,6 +318,22 @@ This automatically:
 - Removes hook configuration from settings.json
 - Restores backup if no other hooks remain
 
+## Develop / Install from Source
+
+```bash
+# Clone and build locally
+git clone https://github.com/yourusername/just-claude.git
+cd just-claude
+npm install
+npm test
+
+# Install the CLI globally from source
+npm install -g .
+
+# Wire up a project (from inside the target repo)
+just-claude init
+```
+
 ## Development
 
 This project uses its own justfile for development tasks!

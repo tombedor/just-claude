@@ -110,11 +110,11 @@ function statusCommand(projectRoot) {
   if (fs.existsSync(settingsFile)) {
     try {
       const settings = JSON.parse(fs.readFileSync(settingsFile, 'utf-8'));
-      if (Array.isArray(settings.hooks)) {
-        hookConfigured = settings.hooks.some(hook =>
-          hook.type === 'SessionStart' &&
-          hook.hooks &&
-          hook.hooks.some(h => h.command && h.command.includes('detect-justfile.sh'))
+      const sessionStartHooks = settings?.hooks?.SessionStart;
+      if (Array.isArray(sessionStartHooks)) {
+        hookConfigured = sessionStartHooks.some(entry =>
+          entry.hooks &&
+          entry.hooks.some(h => h.command && h.command.includes('detect-justfile.sh'))
         );
       }
     } catch {
