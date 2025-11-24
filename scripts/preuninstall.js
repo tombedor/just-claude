@@ -67,62 +67,67 @@ function cleanupSkills(projectRoot) {
 function unconfigureSettings(projectRoot) {
   const settingsFile = path.join(projectRoot, '.claude', 'settings.json');
   const backupFile = path.join(projectRoot, '.claude', 'settings.json.backup');
+  const claudeDir = path.join(projectRoot, '.claude');
 
   if (!fs.existsSync(settingsFile)) {
     return;
   }
 
   try {
-    const content = fs.readFileSync(settingsFile, 'utf-8');
-    const settings = JSON.parse(content);
-
-    if (!Array.isArray(settings.hooks)) {
+    // If backup exists, restore it and clean up
+    if (fs.existsSync(backupFile)) {
+      fs.copyFileSync(backupFile, settingsFile);
+      fs.unlinkSync(backupFile);
+      console.log('just-claude: Restored original settings.json');
       return;
     }
 
-    // Remove our SessionStart hook
-    const originalLength = settings.hooks.length;
-    settings.hooks = settings.hooks.filter(hook => {
-      if (hook.type !== 'SessionStart') {
-        return true;
-      }
+    const content = fs.readFileSync(settingsFile, 'utf-8');
+    const settings = JSON.parse(content);
 
-      // Keep if it doesn't reference our hook script
-      if (!hook.hooks || !Array.isArray(hook.hooks)) {
-        return true;
-      }
+    // Normalize hooks shape
+    if (!settings.hooks || typeof settings.hooks !== 'object') {
+      return;
+    }
 
-      return !hook.hooks.some(h =>
-        h.command && h.command.includes('detect-justfile.sh')
-      );
+    // Remove our SessionStart hook(s)
+    const sessionHooks = Array.isArray(settings.hooks.SessionStart) ? settings.hooks.SessionStart : [];
+    const filteredSessionHooks = sessionHooks.filter(entry => {
+      if (!entry.hooks || !Array.isArray(entry.hooks)) return true;
+      return !entry.hooks.some(h => h.command && h.command.includes('detect-justfile.sh'));
     });
 
-    const removed = originalLength - settings.hooks.length;
+    const removed = sessionHooks.length - filteredSessionHooks.length;
+
+    settings.hooks.SessionStart = filteredSessionHooks;
+    if (settings.hooks.SessionStart.length === 0) {
+      delete settings.hooks.SessionStart;
+    }
+
+    // If hooks is now empty, remove it
+    if (Object.keys(settings.hooks).length === 0) {
+      delete settings.hooks;
+    }
 
     if (removed > 0) {
-      // Check if hooks array is now empty
-      if (settings.hooks.length === 0) {
-        // Restore backup if it exists
-        if (fs.existsSync(backupFile)) {
-          fs.copyFileSync(backupFile, settingsFile);
-          fs.unlinkSync(backupFile);
-          console.log('just-claude: Restored original settings.json');
-        } else {
-          // No backup, just remove our empty hooks array
-          delete settings.hooks;
-          fs.writeFileSync(settingsFile, JSON.stringify(settings, null, 2) + '\n', 'utf-8');
-          console.log('just-claude: Removed hook configuration');
-        }
+      // If settings now empty, remove the file
+      if (Object.keys(settings).length === 0) {
+        fs.unlinkSync(settingsFile);
+        console.log('just-claude: Removed settings.json');
       } else {
-        // Other hooks exist, just write updated settings
         fs.writeFileSync(settingsFile, JSON.stringify(settings, null, 2) + '\n', 'utf-8');
         console.log('just-claude: Removed hook configuration');
-
-        // Clean up backup
-        if (fs.existsSync(backupFile)) {
-          fs.unlinkSync(backupFile);
-        }
       }
+    }
+
+    // Clean up empty .claude directory
+    try {
+      const remaining = fs.readdirSync(claudeDir);
+      if (remaining.length === 0) {
+        fs.rmdirSync(claudeDir);
+      }
+    } catch {
+      // ignore
     }
   } catch (error) {
     console.error('just-claude: Error updating settings.json:', error.message);

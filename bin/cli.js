@@ -27,6 +27,69 @@ function showHelp() {
 }
 
 /**
+ * Ensure .gitignore has the generated skills entry
+ */
+function ensureGitignore(projectRoot, mode = 'prompt') {
+  const gitignorePath = path.join(projectRoot, '.gitignore');
+  const entry = '.claude/skills/just-*/';
+
+  let contents = '';
+  let exists = false;
+
+  if (fs.existsSync(gitignorePath)) {
+    contents = fs.readFileSync(gitignorePath, 'utf-8');
+    exists = true;
+
+    const already = contents.split('\n').some(line => line.trim() === entry);
+    if (already) {
+      return Promise.resolve('already-present');
+    }
+  }
+
+  if (mode === 'skip') {
+    return Promise.resolve('skipped');
+  }
+
+  if (mode === 'prompt') {
+    // Non-interactive environments: skip silently
+    if (!process.stdin.isTTY || !process.stdout.isTTY) {
+      return Promise.resolve('skipped-noninteractive');
+    }
+
+    const readline = require('readline');
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+
+    const question = (q) => new Promise(resolve => rl.question(q, resolve));
+
+    return question('Add ".claude/skills/just-*/" to .gitignore? (Y/n) ').then(answer => {
+      rl.close();
+      const yes = answer.trim().toLowerCase();
+      if (yes === 'n' || yes === 'no') {
+        return 'skipped';
+      }
+
+      const newContents = contents
+        ? contents.trimEnd() + '\n' + entry + '\n'
+        : entry + '\n';
+      fs.writeFileSync(gitignorePath, newContents, 'utf-8');
+      console.log('just-claude: Added .claude/skills/just-*/ to .gitignore');
+      return 'added';
+    });
+  }
+
+  // Force add
+  const newContents = contents
+    ? contents.trimEnd() + '\n' + entry + '\n'
+    : entry + '\n';
+  fs.writeFileSync(gitignorePath, newContents, 'utf-8');
+  console.log('just-claude: Added .claude/skills/just-*/ to .gitignore');
+  return Promise.resolve('added');
+}
+
+/**
  * Check if just command is available
  */
 function isJustAvailable() {
@@ -128,11 +191,20 @@ function statusCommand(projectRoot) {
 /**
  * Init command (install hooks + generate skills)
  */
-function initCommand(projectRoot) {
+async function initCommand(projectRoot, options = {}) {
   console.log('just-claude init\n');
 
   // Ensure hooks/settings are installed for this project
   installHooks(projectRoot);
+
+  // Handle gitignore preference
+  const gitignoreMode = options.gitIgnore === true
+    ? 'force'
+    : options.gitIgnore === false
+      ? 'skip'
+      : 'prompt';
+
+  await ensureGitignore(projectRoot, gitignoreMode);
 
   const justAvailable = isJustAvailable();
   if (!justAvailable) {
@@ -163,11 +235,24 @@ function initCommand(projectRoot) {
 function main() {
   const args = process.argv.slice(2);
   const command = args[0] || 'help';
+  const commandArgs = args.slice(1);
   const projectRoot = process.cwd();
 
   switch (command) {
     case 'init':
-      initCommand(projectRoot);
+      {
+        const options = {
+          gitIgnore: commandArgs.includes('--git-ignore') || commandArgs.includes('-i')
+            ? true
+            : commandArgs.includes('--no-git-ignore')
+              ? false
+              : undefined
+        };
+        initCommand(projectRoot, options).catch(err => {
+          console.error('just-claude: init error:', err.message || err);
+          process.exit(1);
+        });
+      }
       break;
 
     case 'status':

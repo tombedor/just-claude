@@ -47,7 +47,7 @@ This gives you the reusable `just-claude` CLI. Recommended default: global insta
 
 ```bash
 # From inside the repo you want to wire up
-just-claude init
+just-claude init   # will prompt to add generated skills to .gitignore
 ```
 
 This runs the same init logic as `npm install`, plus skill generation:
@@ -219,7 +219,9 @@ Generated skills:
 Install hooks (if needed) and regenerate skills from your justfile:
 
 ```bash
-just-claude init
+just-claude init            # prompts to gitignore generated skills
+just-claude init -i         # force add .claude/skills/just-*/ to .gitignore
+just-claude init --no-git-ignore  # skip gitignore changes
 ```
 
 Run this after you add/remove recipes during a Claude Code session.
