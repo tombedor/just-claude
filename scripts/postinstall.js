@@ -6,7 +6,8 @@ const path = require('path');
 /**
  * Get the project root directory where npm install was run
  */
-function getProjectRoot() {
+function getProjectRoot(cliProjectRoot) {
+  if (cliProjectRoot) return cliProjectRoot;
   // INIT_CWD is set by npm to the directory where npm was invoked
   return process.env.INIT_CWD || process.cwd();
 }
@@ -99,9 +100,9 @@ function configureSettings(projectRoot) {
 /**
  * Main installation function
  */
-function install() {
+function install(cliProjectRoot) {
   try {
-    const projectRoot = getProjectRoot();
+    const projectRoot = getProjectRoot(cliProjectRoot);
 
     console.log('just-claude: Installing...');
     console.log(`just-claude: Project root: ${projectRoot}`);
@@ -110,7 +111,7 @@ function install() {
     configureSettings(projectRoot);
 
     console.log('just-claude: Installation complete!');
-    console.log('just-claude: Skills will be generated when Claude Code starts');
+    console.log('just-claude: Skills will be generated when Claude Code starts (or via just-claude init)');
   } catch (error) {
     console.error('just-claude: Installation error:', error.message);
     console.error('just-claude: You may need to configure manually');
@@ -119,4 +120,12 @@ function install() {
 }
 
 // Run installation
-install();
+if (require.main === module) {
+  install();
+}
+
+module.exports = {
+  installHookScript,
+  configureSettings,
+  install
+};

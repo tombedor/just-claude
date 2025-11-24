@@ -80,7 +80,7 @@ Upon startup, detect the presence of a justfile in the repo and dynamically crea
 just-claude/
 ├── package.json
 ├── bin/
-│   └── cli.js              # npx just-claude commands
+│   └── cli.js              # just-claude CLI commands
 ├── scripts/
 │   ├── postinstall.js      # Runs after npm install
 │   └── preuninstall.js     # Runs before npm uninstall
@@ -95,19 +95,19 @@ just-claude/
 ## Installation & Configuration
 
 ### Installation
-**Single command installation:**
+**Recommended: global install + per-repo init**
 ```bash
-npm install just-claude
+npm install -g just-claude
+# then inside each repo
+just-claude init
 ```
 
-**What it does:**
-1. Installs package to `node_modules/just-claude`
-2. Postinstall script automatically:
-   - Copies `templates/detect-justfile.sh` to `.claude/hooks/detect-justfile.sh`
-   - Creates/updates `.claude/settings.json` to register the SessionStart hook
-   - Backs up existing `.claude/settings.json` if present (to `.claude/settings.json.backup`)
-   - Merges hook configuration into existing settings (doesn't overwrite)
-   - Uses `$INIT_CWD` (npm environment variable) for project root path
+**What init does:**
+- Copies `templates/detect-justfile.sh` to `.claude/hooks/detect-justfile.sh`
+- Creates/updates `.claude/settings.json` to register the SessionStart hook
+- Backs up existing `.claude/settings.json` if present (to `.claude/settings.json.backup`)
+- Merges hook configuration into existing settings (doesn't overwrite)
+- Generates skills from the justfile
 
 **Package scope:** Per-project installation (not global)
 
@@ -278,27 +278,27 @@ Package provides `.gitignore` template:
 
 Package provides CLI for manual operations:
 
-### Regenerate Skills
+### Init / Sync Skills
 ```bash
-npx just-claude regenerate
+just-claude init
 ```
-Manually refresh all skills from current justfile (useful after justfile edits).
+Install hooks (if needed) and refresh skills from current justfile (run after justfile edits).
 
 ### List Generated Skills
 ```bash
-npx just-claude list
+just-claude list
 ```
 Display all just-claude generated skills with recipe info.
 
 ### Clean Generated Skills
 ```bash
-npx just-claude clean
+just-claude clean
 ```
 Remove all generated skill directories (`.claude/skills/just-*`).
 
 ### Status Check
 ```bash
-npx just-claude status
+just-claude status
 ```
 Show:
 - Whether justfile exists

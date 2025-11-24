@@ -4,11 +4,12 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 const { generateSkills, cleanSkills, listSkills } = require('../lib/generator.js');
+const { install: installHooks } = require('../scripts/postinstall.js');
 
 const COMMANDS = {
+  init: 'Install hooks and generate skills',
   status: 'Show justfile and skill status',
   list: 'List all generated skills',
-  regenerate: 'Regenerate skills from justfile',
   clean: 'Remove all generated skills',
   help: 'Show this help message'
 };
@@ -18,7 +19,7 @@ const COMMANDS = {
  */
 function showHelp() {
   console.log('just-claude - Expose justfile recipes as Claude Code skills\n');
-  console.log('Usage: npx just-claude <command>\n');
+  console.log('Usage: just-claude <command>\n');
   console.log('Commands:');
   for (const [cmd, desc] of Object.entries(COMMANDS)) {
     console.log(`  ${cmd.padEnd(12)} ${desc}`);
@@ -125,9 +126,14 @@ function statusCommand(projectRoot) {
 }
 
 /**
- * Regenerate command
+ * Init command (install hooks + generate skills)
  */
-function regenerateCommand(projectRoot) {
+function initCommand(projectRoot) {
+  console.log('just-claude init\n');
+
+  // Ensure hooks/settings are installed for this project
+  installHooks(projectRoot);
+
   const justAvailable = isJustAvailable();
   if (!justAvailable) {
     console.error('Error: just command not found');
@@ -148,7 +154,7 @@ function regenerateCommand(projectRoot) {
   console.log('Generating skills...');
   generateSkills(projectRoot, justfileData);
 
-  console.log('\nRegeneration complete!');
+  console.log('\nInit complete!');
 }
 
 /**
@@ -160,16 +166,16 @@ function main() {
   const projectRoot = process.cwd();
 
   switch (command) {
+    case 'init':
+      initCommand(projectRoot);
+      break;
+
     case 'status':
       statusCommand(projectRoot);
       break;
 
     case 'list':
       listSkills(projectRoot);
-      break;
-
-    case 'regenerate':
-      regenerateCommand(projectRoot);
       break;
 
     case 'clean':

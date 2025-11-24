@@ -21,101 +21,72 @@ That's it! The package will automatically:
 
 ## Quick Start
 
-Let's see just-claude in action with a complete example:
-
 ### 1. Create a Project with a Justfile
 
 ```bash
 # Create a new project
 mkdir my-project && cd my-project
 
-# Create a simple justfile
+# Create a simple justfile with a documented recipe
 cat > justfile << 'EOF'
-# Build the application
-build:
-    echo "Building application..."
-    npm run build
-
-# Run tests
-test:
-    echo "Running tests..."
-    npm test
-
-# Deploy to production
-deploy environment:
-    echo "Deploying to {{environment}}..."
-    ./scripts/deploy.sh {{environment}}
-
-# Start development server
-dev port="3000":
-    echo "Starting dev server on port {{port}}..."
-    npm run dev -- --port {{port}}
+# Say hello (this comment becomes the recipe description)
+hello name="world":
+    echo "Hello, {{name}}!"
 EOF
-
-# Initialize package.json
-npm init -y
 ```
 
-### 2. Install just-claude
+### 2. Install just-claude globally
 
 ```bash
-npm install just-claude
+npm install -g just-claude
 ```
 
-This automatically:
+This gives you the reusable `just-claude` CLI. Recommended default: global install keeps commands fast, works offline, and is the common pattern for CLIs.
+
+### 3. Initialize the repo (hooks + skills)
+
+```bash
+# From inside the repo you want to wire up
+just-claude init
+```
+
+This runs the same init logic as `npm install`, plus skill generation:
 - Creates `.claude/hooks/detect-justfile.sh`
 - Configures `.claude/settings.json` with a SessionStart hook
-- Sets up everything you need
+- Generates skills from your justfile
+- Leaves no package.json or lockfile behind
 
-### 3. See It In Action
+### 4. See It In Action
 
 ```bash
 # Check what was installed
-npx just-claude status
+just-claude status
 
 # Output:
 # just command: ✓ available
 # justfile: ✓ found
-# public recipes: 4
-# generated skills: 0
+# public recipes: 1
+# generated skills: 1
 # hook configured: ✓ yes
 
-# Generate skills from your justfile
-npx just-claude regenerate
-
-# Output:
-# Generating skills...
-# just-claude: Generated 4 skill(s) from justfile
-
 # See what skills were created
-npx just-claude list
+just-claude list
 
 # Output:
 # Generated skills:
-#   - just-build
-#   - just-test
-#   - just-deploy
-#   - just-dev
+#   - just-hello
 
 # Check a generated skill
-cat .claude/skills/just-deploy/SKILL.md
+cat .claude/skills/just-hello/SKILL.md
 ```
 
-### 4. Use with Claude Code
+### 5. Use with Claude Code
 
-Now when you start Claude Code, it will automatically detect your justfile recipes. Try asking Claude:
+Now when you start Claude Code, it will automatically detect your justfile recipes. Try asking Claude to greet someone:
 
-**You:** "Can you run the tests for this project?"
+**You:** "Say hello to Redwood City"
 
-**Claude:** *Sees the `just-test` skill and knows it can run `just test`*
-
-**You:** "Deploy this to staging"
-
-**Claude:** *Sees `just-deploy` requires an `environment` parameter and runs `just deploy staging`*
-
-**You:** "Start the dev server on port 8080"
-
-**Claude:** *Uses the optional parameter: `just dev 8080`*
+**Claude:** *Sees the `just-hello` skill and runs `just hello "Redwood City"`*
 
 That's it! Your justfile recipes are now Claude Code skills.
 
@@ -212,7 +183,7 @@ _private-helper:
 Check your installation and justfile status:
 
 ```bash
-npx just-claude status
+just-claude status
 ```
 
 Output:
@@ -231,7 +202,7 @@ hook configured: ✓ yes
 See all generated skills:
 
 ```bash
-npx just-claude list
+just-claude list
 ```
 
 Output:
@@ -243,22 +214,22 @@ Generated skills:
   - just-serve
 ```
 
-### Regenerate
+### Init (sync)
 
-Manually refresh skills after editing justfile:
+Install hooks (if needed) and regenerate skills from your justfile:
 
 ```bash
-npx just-claude regenerate
+just-claude init
 ```
 
-Useful when you add/remove recipes during a Claude Code session.
+Run this after you add/remove recipes during a Claude Code session.
 
 ### Clean
 
 Remove all generated skills:
 
 ```bash
-npx just-claude clean
+just-claude clean
 ```
 
 ## Configuration
@@ -294,7 +265,7 @@ See [examples/example-justfile](examples/example-justfile) for a comprehensive e
 
 1. Check installation:
    ```bash
-   npx just-claude status
+   just-claude status
    ```
 
 2. Verify justfile syntax:
@@ -302,9 +273,9 @@ See [examples/example-justfile](examples/example-justfile) for a comprehensive e
    just --dump --dump-format json
    ```
 
-3. Manually regenerate:
+3. Manually sync:
    ```bash
-   npx just-claude regenerate
+   just-claude init
    ```
 
 ### Hook not running
@@ -327,12 +298,12 @@ Verify `.claude/settings.json` contains:
 }
 ```
 
-### Skills won't regenerate
+### Skills won't update
 
-Clean and regenerate:
+Clean and re-init:
 ```bash
-npx just-claude clean
-npx just-claude regenerate
+just-claude clean
+just-claude init
 ```
 
 ## Uninstall

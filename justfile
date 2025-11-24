@@ -61,9 +61,9 @@ test-local:
     @echo ""
     @echo "To test:"
     @echo "  cd /tmp/just-claude-test"
-    @echo "  npx just-claude status"
-    @echo "  npx just-claude regenerate"
-    @echo "  npx just-claude list"
+    @echo "  just-claude init"
+    @echo "  just-claude status"
+    @echo "  just-claude list"
 
 # Run full test suite with explanations
 test-full:

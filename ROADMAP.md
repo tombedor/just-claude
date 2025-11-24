@@ -234,31 +234,31 @@ test ! -d .claude/skills/just-*
 
 ## Phase 5: CLI Commands
 
-**Goal**: Provide manual commands for regenerate, list, clean, status
+**Goal**: Provide manual commands for init (sync), list, clean, status
 
 ### Deliverables
 - [ ] `bin/cli.js` - CLI entry point
-- [ ] `npx just-claude regenerate` - Regenerate skills
-- [ ] `npx just-claude list` - Show generated skills
-- [ ] `npx just-claude clean` - Remove all skills
-- [ ] `npx just-claude status` - Show system status
+- [ ] `just-claude init` - Install hooks and regenerate skills
+- [ ] `just-claude list` - Show generated skills
+- [ ] `just-claude clean` - Remove all skills
+- [ ] `just-claude status` - Show system status
 
 ### Testable Functionality
 ```bash
 # Check status
-npx just-claude status
+just-claude status
 # Expected: Shows justfile presence, recipe count, skill count
 
 # List skills
-npx just-claude list
+just-claude list
 # Expected: Lists all generated skills with recipe info
 
-# Regenerate skills
-npx just-claude regenerate
-# Expected: Rebuilds all skills from current justfile
+# Init/sync skills
+just-claude init
+# Expected: Installs hooks (if needed) and rebuilds all skills from current justfile
 
 # Clean skills
-npx just-claude clean
+just-claude clean
 # Expected: Removes all just-* skill directories
 ls .claude/skills/just-*  # Should be empty
 ```
@@ -270,8 +270,8 @@ ls .claude/skills/just-*  # Should be empty
 - ✅ `status` shows `just` command availability
 - ✅ `list` displays all generated skills
 - ✅ `list` shows recipe info (name, params, doc)
-- ✅ `regenerate` removes old skills
-- ✅ `regenerate` creates new skills from justfile
+- ✅ `init` removes old skills
+- ✅ `init` creates new skills from justfile
 - ✅ `clean` removes all just-* directories
 - ✅ All commands have `--help` output
 

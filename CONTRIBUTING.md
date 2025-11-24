@@ -56,12 +56,12 @@ mkdir test-project && cd test-project
 echo 'build:\n    echo "test"' > justfile
 
 # Install from local development
-npm install /path/to/just-claude
+npm install -g /path/to/just-claude
 
 # Test CLI commands
-npx just-claude status
-npx just-claude list
-npx just-claude regenerate
+just-claude init
+just-claude status
+just-claude list
 ```
 
 ## Code Style
