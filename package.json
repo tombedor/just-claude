@@ -37,10 +37,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/just-claude.git"
+    "url": "https://github.com/tombedor/just-claude.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/just-claude/issues"
+    "url": "https://github.com/tombedor/just-claude/issues"
   },
-  "homepage": "https://github.com/yourusername/just-claude#readme"
+  "homepage": "https://github.com/tombedor/just-claude#readme"
 }

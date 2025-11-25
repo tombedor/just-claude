@@ -163,6 +163,76 @@ info:
     @echo "Documentation:"
     @ls -lh README.md PRD.md ROADMAP.md CONTRIBUTING.md | awk '{print "  " $9 " (" $5 ")"}'
 
+# Publish a new version (patch, minor, or major)
+publish version:
+    #!/usr/bin/env bash
+    set -e
+
+    # Validate version argument
+    if [[ "{{version}}" != "patch" && "{{version}}" != "minor" && "{{version}}" != "major" ]]; then
+        echo "Error: version must be 'patch', 'minor', or 'major'"
+        exit 1
+    fi
+
+    echo "=== Publishing new {{version}} version ==="
+    echo ""
+
+    # Ensure working directory is clean
+    if [[ -n $(git status -s) ]]; then
+        echo "Error: Working directory is not clean. Commit or stash changes first."
+        git status -s
+        exit 1
+    fi
+
+    # Ensure we're on main branch
+    BRANCH=$(git branch --show-current)
+    if [[ "$BRANCH" != "main" ]]; then
+        echo "Warning: You're on branch '$BRANCH', not 'main'"
+        read -p "Continue anyway? [y/N] " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            exit 1
+        fi
+    fi
+
+    # Run tests
+    echo "1. Running tests..."
+    npm test || (echo "✗ Tests failed! Fix tests before publishing."; exit 1)
+    echo "✓ Tests passed"
+    echo ""
+
+    # Bump version and create git tag
+    echo "2. Bumping {{version}} version..."
+    NEW_VERSION=$(npm version {{version}} --no-git-tag-version)
+    echo "✓ Version bumped to $NEW_VERSION"
+    echo ""
+
+    # Commit version bump
+    echo "3. Committing version bump..."
+    git add package.json
+    git commit -m "Bump version to $NEW_VERSION"
+    echo "✓ Committed"
+    echo ""
+
+    # Create and push tag
+    echo "4. Creating and pushing tag..."
+    git tag "$NEW_VERSION"
+    git push origin "$BRANCH"
+    git push origin "$NEW_VERSION"
+    echo "✓ Pushed $NEW_VERSION to GitHub"
+    echo ""
+
+    echo "==================================="
+    echo "✅ Version $NEW_VERSION published!"
+    echo "==================================="
+    echo ""
+    echo "GitHub Actions will now:"
+    echo "  1. Run tests"
+    echo "  2. Publish to npm registry"
+    echo ""
+    echo "Monitor progress at:"
+    echo "  https://github.com/tombedor/just-claude/actions"
+
 # Show help
 help:
     @echo "just-claude development commands:"
@@ -174,6 +244,10 @@ help:
     @echo ""
     @echo "  just build          - Build package tarball"
     @echo "  just test-local     - Create local test environment"
+    @echo ""
+    @echo "  just publish patch  - Publish a patch version (0.1.0 -> 0.1.1)"
+    @echo "  just publish minor  - Publish a minor version (0.1.0 -> 0.2.0)"
+    @echo "  just publish major  - Publish a major version (0.1.0 -> 1.0.0)"
     @echo ""
     @echo "  just install        - Install dependencies"
     @echo "  just clean          - Clean build artifacts"
