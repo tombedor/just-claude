@@ -8,6 +8,7 @@ const { install: installHooks } = require('../scripts/postinstall.js');
 
 const COMMANDS = {
   init: 'Install hooks and generate skills',
+  generate: 'Generate skills from justfile (silent)',
   status: 'Show justfile and skill status',
   list: 'List all generated skills',
   clean: 'Remove all generated skills',
@@ -189,6 +190,29 @@ function statusCommand(projectRoot) {
 }
 
 /**
+ * Generate command (just regenerate skills, silent)
+ */
+function generateCommand(projectRoot) {
+  const justAvailable = isJustAvailable();
+  if (!justAvailable) {
+    // Exit silently if just not available
+    process.exit(0);
+  }
+
+  const justfileData = getJustfileJson(projectRoot);
+  if (!justfileData) {
+    // Exit silently if no justfile
+    process.exit(0);
+  }
+
+  // Clean existing skills
+  cleanSkills(projectRoot);
+
+  // Generate new skills
+  generateSkills(projectRoot, justfileData);
+}
+
+/**
  * Init command (install hooks + generate skills)
  */
 async function initCommand(projectRoot, options = {}) {
@@ -253,6 +277,10 @@ function main() {
           process.exit(1);
         });
       }
+      break;
+
+    case 'generate':
+      generateCommand(projectRoot);
       break;
 
     case 'status':

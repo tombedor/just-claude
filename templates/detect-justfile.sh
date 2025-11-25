@@ -6,24 +6,15 @@ set -euo pipefail
 
 # Use CLAUDE_PROJECT_DIR for absolute paths
 PROJECT_ROOT="${CLAUDE_PROJECT_DIR:-.}"
-SKILLS_DIR="$PROJECT_ROOT/.claude/skills"
 
-# Check if just command exists
-if ! command -v just &> /dev/null; then
-    echo "just-claude: just command not found, skipping skill generation" >&2
+# Check if just-claude command exists
+if ! command -v just-claude &> /dev/null; then
+    # just-claude not installed - exit silently
     exit 0
 fi
 
-# Check if justfile exists (just will auto-detect variants)
-if ! just --dump --dump-format json &> /dev/null; then
-    # No justfile or error - exit silently
-    exit 0
-fi
-
-# Parse justfile and extract recipes
-JUSTFILE_JSON=$(just --dump --dump-format json 2>/dev/null || echo '{}')
-
-# Use Node.js to parse JSON and generate skills
-node "$PROJECT_ROOT/node_modules/just-claude/lib/generator.js" "$PROJECT_ROOT" "$JUSTFILE_JSON"
+# Change to project directory and run just-claude generate
+cd "$PROJECT_ROOT"
+just-claude generate
 
 exit 0
