@@ -1,6 +1,6 @@
 {
   "name": "just-claude",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Automatically expose justfile recipes as Claude Code skills",
   "main": "lib/generator.js",
   "bin": {
