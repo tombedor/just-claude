@@ -1,6 +1,10 @@
 # just-claude
 
-Automatically expose justfile recipes as Claude Code skills.
+Automatically expose [just](https://github.com/casey/just) recipes as Claude Code skills.
+
+This enables human devs and Claude to share a common toolset:
+
+![why](./docs/why.png)
 
 ## Installation
 
@@ -13,7 +17,7 @@ Then, in your project, run:
 just-claude init
 ```
 
-This will install a hook which will automatically make any `just` commands available to Claude via [Claude Agent Skills](https://www.claude.com/blog/skills)
+This will install a hook which will automatically make any `just` recipes available to Claude via [Claude Agent Skills](https://www.claude.com/blog/skills), and keep them synchronized (via a Claude session hook).
 
 ## Requirements
 
